@@ -10,26 +10,34 @@ several clients reject dots in tool names. See docs/spec-conflicts.md #1.
 
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.mcpserver import Context, MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import ToolAnnotations
 
 from . import runtime
 
 
-class PocketUnavailable(Exception):
-    pass
+class PocketUnavailable(ToolError):
+    """Shown to the model as a tool error with its message (generic exceptions are hidden)."""
 
 
 def _client_name(ctx: Context | None) -> str | None:
     try:
-        info = ctx.session.client_params.clientInfo
+        info = ctx.session.client_params.client_info
         return f"{info.name}/{info.version}" if info.version else info.name
     except Exception:
         return None
 
 
-def build_server(profile: str) -> FastMCP:
-    mcp = FastMCP(
+READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False)
+PROPOSE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
+
+
+def build_server(profile: str) -> MCPServer:
+    mcp = MCPServer(
         "lm-pocket",
         instructions=(
             "LM-Pocket is the user's own long-term memory, stored on a device they control. "
@@ -61,44 +69,44 @@ def build_server(profile: str) -> FastMCP:
             raise PocketUnavailable(f"{err.get('code', 'error')}: {err.get('message', '')}".strip())
         return body["result"]
 
-    @mcp.tool()
-    def get_profile(ctx: Context) -> dict:
+    @mcp.tool(annotations=READ)
+    def get_profile(ctx: Context) -> dict[str, Any]:
         """What this connection may do: readable spaces and where proposals go."""
         return forward("get_profile", {}, ctx)
 
-    @mcp.tool()
-    def list_spaces(ctx: Context) -> list:
+    @mcp.tool(annotations=READ)
+    def list_spaces(ctx: Context) -> list[dict]:
         """Spaces of the user's memory that this profile can read."""
         return forward("list_spaces", {}, ctx)
 
-    @mcp.tool()
-    def search_memories(query: str, ctx: Context, limit: int = 10, space: str | None = None) -> list:
+    @mcp.tool(annotations=READ)
+    def search_memories(query: str, ctx: Context, limit: int = 10, space: str | None = None) -> list[dict]:
         """Full-text search over the user's durable memories (accent-insensitive). Empty query = most recent.
         Each result includes provenance: who stated it, how and when."""
         return forward("search_memories", {"query": query, "limit": limit, "space": space}, ctx)
 
-    @mcp.tool()
-    def get_memory(id: str, ctx: Context) -> dict:
+    @mcp.tool(annotations=READ)
+    def get_memory(id: str, ctx: Context) -> dict[str, Any]:
         """One memory by id."""
         return forward("get_memory", {"id": id}, ctx)
 
-    @mcp.tool()
-    def get_context(ctx: Context, topic: str = "", purpose: str = "", max_tokens: int = 800) -> dict:
+    @mcp.tool(annotations=READ)
+    def get_context(ctx: Context, topic: str = "", purpose: str = "", max_tokens: int = 800) -> dict[str, Any]:
         """A compact, budgeted context package about a topic, grouped by preferences, history, goals and
         inferences. Prefer this at the start of a task."""
         return forward("get_context", {"topic": topic, "purpose": purpose, "max_tokens": max_tokens}, ctx)
 
-    @mcp.tool()
-    def get_recent_context(ctx: Context, limit: int = 10) -> list:
+    @mcp.tool(annotations=READ)
+    def get_recent_context(ctx: Context, limit: int = 10) -> list[dict]:
         """The most recently updated durable memories this profile can read."""
         return forward("get_recent_context", {"limit": limit}, ctx)
 
-    @mcp.tool()
-    def get_policies(ctx: Context) -> dict:
+    @mcp.tool(annotations=READ)
+    def get_policies(ctx: Context) -> dict[str, Any]:
         """Read-only view of this profile's rules."""
         return forward("get_policies", {}, ctx)
 
-    @mcp.tool()
+    @mcp.tool(annotations=PROPOSE)
     def propose_memory(
         content: str,
         ctx: Context,
@@ -107,7 +115,7 @@ def build_server(profile: str) -> FastMCP:
         tags: list[str] | None = None,
         provider: str | None = None,
         model: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Propose a new memory about the user. It is saved as a CANDIDATE that the user must approve.
         type: fact | preference | event | interpretation | skill | decision | relationship | goal.
         Use 'interpretation' for anything inferred. provider/model: identify yourself for provenance."""
@@ -119,4 +127,7 @@ def build_server(profile: str) -> FastMCP:
 
 
 def run(profile: str) -> None:
+    import logging
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # stderr belongs to the MCP client's log
     build_server(profile).run("stdio")
