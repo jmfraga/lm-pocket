@@ -11,7 +11,7 @@
   <div>{{ m.content }}</div>
   <div class="muted">
     <span class="chip">{{ m.space }}</span><span class="chip">{{ m.type }}</span>{% if m.portable %}<span class="chip">portable</span>{% endif %}
-    {{ m.source_type }} · {{ m.provenance.get('method') }}{% if m.provenance.get('provider') %} · {{ m.provenance.provider }}{% endif %}{% if m.provenance.get('client') %} · {{ m.provenance.client }}{% endif %} · {{ m.created_at[:10] }} · <code>{{ m.id[:8] }}</code>
+    {{ m.source_type }} · {{ m.provenance.get('method') }}{% if m.provenance.get('provider') %} · {{ m.provenance.provider }}{% endif %}{% if m.provenance.get('client') %} · {{ m.provenance.client }}{% endif %} · {{ m.created_at[:10] }} · <code>{{ m.id[-8:] }}</code>
   </div>
   <form method="post" action="/memories/{{ m.id }}/archive" style="margin-top:6px"><button class="secondary">Archive</button></form>
 </div>

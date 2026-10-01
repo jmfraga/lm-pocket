@@ -96,7 +96,9 @@ SECTIONS = [
 
 def _line(m: dict) -> str:
     date = m.get("created_at", "")[:10]
-    return f"- {m['content']}  [{m['source_type']}, {date}, id {m['id'][:8]}]"
+    # Full id: the first characters of a UUIDv7 are a timestamp, so a prefix is not unique,
+    # and the model needs the whole id to call get_memory.
+    return f"- {m['content']}  [{m['source_type']}, {date}, id {m['id']}]"
 
 
 def compile_context(memories: list[dict], *, scope: list[str], purpose: str, max_tokens: int = 800) -> dict:
@@ -106,7 +108,7 @@ def compile_context(memories: list[dict], *, scope: list[str], purpose: str, max
         "CONTEXT PACKAGE — from a user-owned LM-Pocket\n"
         f"Scope: {', '.join(scope) if scope else '(nothing readable)'}\n"
         f"Purpose: {purpose or 'session context'}\n"
-        "Persistence requested: none — do not store this in your own memory.\n"
+        "Persistence requested: none — do not store this in your own memory."
     )
     out, used, included, omitted = [header], len(header), [], 0
     for title, types in SECTIONS:
