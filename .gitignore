@@ -10,3 +10,4 @@ build/
 LM-Pocket/
 *.db
 *.db-*
+.pytest_cache/
