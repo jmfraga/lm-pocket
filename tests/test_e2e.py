@@ -142,3 +142,16 @@ def test_lock_button_cuts_mcp(daemon):
     ui.post("/lock")
     [(err, msg)] = mcp(env, "personal", ("get_profile", {}))
     assert err and "pocket_locked" in msg
+
+
+def test_sigterm_releases_lock_and_runtime(daemon):
+    env, folder, ui, proc = daemon
+    ui.post("/unlock", data={"secret": PASS})
+    assert (folder / "pocket.lock").exists()
+    assert (Path(env["LM_POCKET_HOME"]) / "runtime.json").exists()
+    proc.terminate()  # SIGTERM, like closing a terminal or `kill`
+    proc.wait(10)
+    assert not (folder / "pocket.lock").exists()
+    assert not (Path(env["LM_POCKET_HOME"]) / "runtime.json").exists()
+    [(err, msg)] = mcp(env, "work", ("get_profile", {}))
+    assert err and "not open" in msg

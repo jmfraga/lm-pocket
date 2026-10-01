@@ -14,6 +14,8 @@ from __future__ import annotations
 import hmac
 import json
 import sys
+from collections.abc import Callable
+from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import quote
 
@@ -36,8 +38,18 @@ def mcp_command(profile: str) -> list[str]:
     return [sys.executable, "-m", "lm_pocket", "mcp", "--profile", profile]
 
 
-def create_app(service: PocketService, *, api_token: str, ui_token: str, allowed_hosts: set[str]) -> FastAPI:
-    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+def create_app(service: PocketService, *, api_token: str, ui_token: str, allowed_hosts: set[str],
+               on_shutdown: Callable[[], None] | None = None) -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(_app):
+        yield
+        # Runs on Ctrl+C and SIGTERM. uvicorn re-raises the signal after shutdown,
+        # so code after uvicorn.run() is not a reliable place to lock the pocket.
+        service.lock("app closed")
+        if on_shutdown:
+            on_shutdown()
+
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     allowed_origins = {f"http://{h}" for h in allowed_hosts}
 
     def same(a: str | None, b: str) -> bool:
