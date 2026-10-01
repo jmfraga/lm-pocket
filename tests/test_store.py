@@ -23,8 +23,12 @@ def mem(content, space="personal", **kw):
 
 
 def test_uuid7_is_time_ordered_and_versioned():
-    a, b = uuid7(), uuid7()
-    assert a[14] == "7" and a <= b
+    import time
+
+    a = uuid7()
+    time.sleep(0.002)  # ordering is guaranteed across milliseconds, not within one
+    b = uuid7()
+    assert a[14] == "7" and a[19] in "89ab" and a < b
 
 
 def test_search_is_accent_insensitive_and_space_filtered(store):
