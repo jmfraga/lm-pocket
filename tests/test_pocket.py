@@ -68,11 +68,20 @@ def test_lock_file_blocks_second_owner_on_same_host(tmp_path, monkeypatch):
     folder, _ = PocketFolder.create(tmp_path / "p", PASS)
     folder.acquire()
     folder.acquire()  # same process: fine
-    data = json.loads(folder.lock_path.read_text())
-    data["pid"] = 1  # pretend another live process (launchd/init) owns it
-    folder.lock_path.write_text(json.dumps(data))
-    with pytest.raises(PocketError):
-        folder.acquire()
+    import subprocess
+    import sys
+
+    other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        data = json.loads(folder.lock_path.read_text())
+        data["pid"] = other.pid  # another live process on this machine owns it
+        folder.lock_path.write_text(json.dumps(data))
+        with pytest.raises(PocketError):
+            folder.acquire()
+    finally:
+        other.kill()
+        other.wait()
+    folder.acquire()  # that process is gone now: stale lock, taken over
     folder.acquire(force=True)
     folder.release()
     assert not folder.lock_path.exists()
