@@ -1,0 +1,25 @@
+{
+  "profiles": {
+    "work": {
+      "allow": [
+        "read:portable_professional",
+        "propose:memory"
+      ],
+      "propose_into": "portable_professional",
+      "deny": [
+        "read:personal",
+        "read:work:*"
+      ]
+    },
+    "personal": {
+      "allow": [
+        "read:personal",
+        "read:portable_professional",
+        "read:shared",
+        "propose:memory"
+      ],
+      "propose_into": "personal"
+    }
+  },
+  "auto_rules": []
+}
