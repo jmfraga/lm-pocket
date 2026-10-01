@@ -10,7 +10,32 @@ LM-Pocket is a personal, portable, local-first, model-agnostic memory layer that
 
 It is **not** an assistant and **not** a model. It is a **continuity layer**: storage, provenance, governance and access control for your long-term memory, exposed to any LLM through MCP or through copy/paste prompt bridges.
 
-> **Status:** specification stage (v0.2 draft). No code yet. This is the right moment to join and argue about the design.
+> **Status:** v0.1 prototype. The first demo works end to end on a real USB-style volume: encrypted pocket, passphrase unlock, MCP reads limited by profile, proposals approved in a localhost UI, prompt-bridge import/export, and MCP access cut off when the pocket is locked or unplugged. **Not audited, not for real secrets yet.** Spec frozen at tag `spec-v0.2-frozen`.
+
+## Quick start
+
+Needs [uv](https://docs.astral.sh/uv/). Offline machines: see [docs/offline.md](docs/offline.md).
+
+```bash
+git clone https://github.com/jmfraga/lm-pocket && cd lm-pocket
+uv sync
+uv run lm-pocket init /Volumes/MyUSB/LM-Pocket --sample   # prints your recovery key once
+uv run lm-pocket open /Volumes/MyUSB/LM-Pocket            # opens the localhost UI; unlock there
+```
+
+The home page shows the exact MCP config for each permission profile. For Claude Code:
+
+```bash
+claude mcp add pocket-work -- "$(uv run which python)" -m lm_pocket mcp --profile work
+```
+
+Then ask Claude something that depends on your memory. Lock the pocket (or unplug the USB) and ask again.
+
+See the [first demo](docs/demo.md) — including a real Claude session — or run it yourself on macOS with a throwaway exFAT disk image:
+
+```bash
+uv run python scripts/demo_usb_macos.py
+```
 
 ## Why
 
@@ -43,7 +68,9 @@ Client support changes fast — see [docs/mcp.md](docs/mcp.md) for details and p
 
 ## Documents
 
-- [SPEC.md](SPEC.md) — the MVP specification (v0.2 draft)
+- [SPEC.md](SPEC.md) — the MVP specification (v0.2, frozen for v0.1)
+- [docs/demo.md](docs/demo.md) — the first demo, step by step, with real output
+- [docs/spec-conflicts.md](docs/spec-conflicts.md) — what implementation found that the spec must decide
 - [docs/threat-model.md](docs/threat-model.md) — what LM-Pocket protects against, and what it cannot
 - [docs/mcp.md](docs/mcp.md) — MCP tools, permission profiles, client setup
 - [docs/bridge.md](docs/bridge.md) — exposing a read-only bridge for ChatGPT and other remote clients

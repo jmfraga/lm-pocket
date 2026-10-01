@@ -1,29 +1,30 @@
 # MCP: tools, profiles and client setup
 
-> LM-Pocket's MCP server does not exist yet. This document is the contract it will implement. Client config details reflect the state of each client at the time of writing — **they change often, please send corrections**.
+> **v0.1 status:** implemented over **stdio** only, with tool names **without** the `pocket.` prefix (`search_memories`, …). Both are proposed spec changes — see [spec-conflicts.md](spec-conflicts.md) #1 and #2. Localhost HTTP MCP comes with the v0.2 bridge. Verified clients: the MCP Python SDK client and Claude Code. Other client configs below reflect each client at the time of writing — **please send corrections**.
+
+The command to put in a client config is shown on the LM-Pocket home page for each profile: `<python> -m lm_pocket mcp --profile <name>`. The proxy holds no keys; it forwards to the running `lm-pocket open`, so the pocket must be open and unlocked.
 
 ## Tools
 
 | Tool | Scope needed | Returns |
 |---|---|---|
-| `pocket.get_profile` | — | Name, allowed spaces and scopes of this connection |
-| `pocket.list_spaces` | — | Only the spaces this profile can read |
-| `pocket.search_memories` | `read:<space>` | Matching durable memories, with provenance |
-| `pocket.get_memory` | `read:<space>` | One memory by id |
-| `pocket.get_context` | `read:<space>` | A compiled, token-budgeted context package for a topic |
-| `pocket.get_recent_context` | `read:<space>` | Recent durable memories |
-| `pocket.get_policies` | — | Read-only view of this profile's rules |
-| `pocket.propose_memory` | `propose:memory` | Creates a **candidate** in the profile's `propose_into` space |
+| `get_profile` | — | Name, allowed spaces and scopes of this connection |
+| `list_spaces` | — | Only the spaces this profile can read |
+| `search_memories` | `read:<space>` | Matching durable memories, with provenance |
+| `get_memory` | `read:<space>` | One memory by id |
+| `get_context` | `read:<space>` | A compiled, token-budgeted context package for a topic |
+| `get_recent_context` | `read:<space>` | Recent durable memories |
+| `get_policies` | — | Read-only view of this profile's rules |
+| `propose_memory` | `propose:memory` | Creates a **candidate** in the profile's `propose_into` space |
 
-Never exposed: durable writes, deletes, policy changes. When the pocket is locked, every tool returns a `pocket_locked` error.
+Never exposed: durable writes, deletes, policy changes. When the pocket is locked or its folder disappears, every tool returns a `pocket_locked` error; when the app is closed, `not open`/`not running`.
 
 ## Profiles
 
 One MCP config entry = one profile. The client never chooses its own permissions; the entry does.
 
 ```bash
-lm-pocket mcp --profile work            # stdio
-lm-pocket mcp --profile work --http 7421   # streamable HTTP on localhost only
+lm-pocket mcp --profile work            # stdio (v0.1)
 ```
 
 ## Client setup

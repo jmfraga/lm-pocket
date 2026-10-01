@@ -10,7 +10,26 @@ LM-Pocket es una capa de memoria personal, portable, local-first, independiente 
 
 **No** es un asistente ni un modelo. Es una **capa de continuidad**: almacenamiento, provenance, gobierno y control de acceso de tu memoria de largo plazo, expuesta a cualquier LLM por MCP o por puentes de copiar y pegar.
 
-> **Estado:** etapa de especificación (borrador v0.2). Todavía no hay código. Es el momento ideal para sumarse y discutir el diseño.
+> **Estado:** prototipo v0.1. La primera demo funciona de punta a punta sobre un volumen tipo USB real: pocket cifrado, desbloqueo con passphrase, lecturas MCP limitadas por perfil, propuestas aprobadas en la UI local, importación/exportación por prompt y corte del acceso MCP al bloquear o desconectar. **Sin auditoría de seguridad: todavía no para secretos reales.** Especificación congelada en el tag `spec-v0.2-frozen`.
+
+## Inicio rápido
+
+Necesitas [uv](https://docs.astral.sh/uv/). Para máquinas sin internet: [docs/offline.md](docs/offline.md).
+
+```bash
+git clone https://github.com/jmfraga/lm-pocket && cd lm-pocket
+uv sync
+uv run lm-pocket init /Volumes/MiUSB/LM-Pocket --sample   # muestra la clave de recuperación una sola vez
+uv run lm-pocket open /Volumes/MiUSB/LM-Pocket            # abre la UI local; desbloquea ahí
+```
+
+La página de inicio muestra la configuración MCP exacta de cada perfil. Para Claude Code:
+
+```bash
+claude mcp add pocket-work -- "$(uv run which python)" -m lm_pocket mcp --profile work
+```
+
+Mira la [primera demo](docs/demo.md) (incluye una sesión real con Claude) o córrela en macOS con una imagen de disco exFAT desechable: `uv run python scripts/demo_usb_macos.py`.
 
 ## Por qué
 
@@ -43,7 +62,8 @@ El soporte de los clientes cambia rápido — ver [docs/mcp.md](docs/mcp.md) y p
 
 ## Documentos
 
-- [docs/es/ESPECIFICACION.md](docs/es/ESPECIFICACION.md) — especificación del MVP (borrador v0.2)
+- [docs/es/ESPECIFICACION.md](docs/es/ESPECIFICACION.md) — especificación del MVP (v0.2, congelada para v0.1)
+- [docs/demo.md](docs/demo.md) — la primera demo con salida real · [docs/spec-conflicts.md](docs/spec-conflicts.md) — conflictos encontrados al implementar
 - [docs/es/modelo-de-amenazas.md](docs/es/modelo-de-amenazas.md) — de qué protege LM-Pocket y de qué no puede
 - [docs/es/puente.md](docs/es/puente.md) — puente de solo lectura para ChatGPT y clientes remotos
 - [ROADMAP.md](ROADMAP.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [schemas/](schemas/) · [examples/](examples/)
