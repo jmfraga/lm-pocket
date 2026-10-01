@@ -83,7 +83,9 @@ def cmd_open(a) -> None:
     port = _free_port(a.port)
     api_token, ui_token = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-    app = create_app(svc, api_token=api_token, ui_token=ui_token, allowed_hosts=hosts)
+    pid = os.getpid()
+    app = create_app(svc, api_token=api_token, ui_token=ui_token, allowed_hosts=hosts,
+                     on_shutdown=lambda: runtime.clear(pid))
     runtime.write({"pid": os.getpid(), "port": port, "api_token": api_token, "data": str(svc.folder.path)})
     url = f"http://127.0.0.1:{port}/login?t={ui_token}"
     print(f"LM-Pocket Local {__version__} — {svc.folder.path}")
@@ -93,9 +95,9 @@ def cmd_open(a) -> None:
         webbrowser.open(url)
     try:
         uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
-    finally:
+    finally:  # normal exit path; signals are handled by the app lifespan
         svc.lock("app closed")
-        runtime.clear(os.getpid())
+        runtime.clear(pid)
 
 
 def cmd_mcp(a) -> None:
@@ -105,15 +107,12 @@ def cmd_mcp(a) -> None:
 
 
 def cmd_status(a) -> None:
-    import httpx
-
     info = runtime.read()
     if not info:
         sys.exit("No LM-Pocket is open.")
     try:
-        r = httpx.get(f"http://127.0.0.1:{info['port']}/api/v1/status",
-                      headers={"Authorization": f"Bearer {info['api_token']}"}, timeout=5).json()
-    except httpx.HTTPError:
+        r = runtime.request(info, "GET", "/api/v1/status", timeout=5)
+    except runtime.Unreachable:
         sys.exit("LM-Pocket is not running (stale runtime file).")
     state = "unlocked" if r["result"]["unlocked"] else f"locked ({r['result']['reason'] or 'waiting for passphrase'})"
     print(f"{info['data']}: {state} on port {info['port']}")

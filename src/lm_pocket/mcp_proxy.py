@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
 from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
@@ -55,15 +54,10 @@ def build_server(profile: str) -> MCPServer:
         if not info:
             raise PocketUnavailable("LM-Pocket is not open on this computer (run `lm-pocket open <folder>`).")
         try:
-            r = httpx.post(
-                f"http://127.0.0.1:{info['port']}/api/v1/call",
-                headers={"Authorization": f"Bearer {info['api_token']}", "Host": f"127.0.0.1:{info['port']}"},
-                json={"profile": profile, "tool": tool, "args": args, "client": _client_name(ctx)},
-                timeout=15,
-            )
-        except httpx.HTTPError as exc:
+            body = runtime.request(info, "POST", "/api/v1/call", {
+                "profile": profile, "tool": tool, "args": args, "client": _client_name(ctx)})
+        except runtime.Unreachable as exc:
             raise PocketUnavailable("LM-Pocket is not running (the app was closed).") from exc
-        body = r.json()
         if not body.get("ok"):
             err = body.get("error", {})
             raise PocketUnavailable(f"{err.get('code', 'error')}: {err.get('message', '')}".strip())
@@ -127,7 +121,4 @@ def build_server(profile: str) -> MCPServer:
 
 
 def run(profile: str) -> None:
-    import logging
-
-    logging.getLogger("httpx").setLevel(logging.WARNING)  # stderr belongs to the MCP client's log
     build_server(profile).run("stdio")
