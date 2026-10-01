@@ -1,0 +1,5 @@
+{"at": "2026-09-30T09:00:00Z", "event": "pocket_unlocked"}
+{"at": "2026-09-30T09:01:00Z", "event": "mcp_client_connected", "profile": "work", "client": "claude-desktop"}
+{"at": "2026-09-30T09:02:00Z", "event": "memories_retrieved", "profile": "work", "space": "portable_professional", "count": 3}
+{"at": "2026-09-30T09:05:00Z", "event": "proposal_received", "profile": "work", "memory_id": "0192f0a0-0000-7000-8000-000000000009"}
+{"at": "2026-09-30T09:30:00Z", "event": "pocket_locked"}

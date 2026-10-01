@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jmfraga/lm-pocket/schemas/manifest.schema.json",
+  "title": "LM-Pocket export manifest",
+  "type": "object",
+  "required": ["format", "format_version", "created_at", "files"],
+  "properties": {
+    "format": { "const": "lm-pocket-export" },
+    "format_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "generator": { "type": "string" },
+    "scope": { "type": "array", "items": { "type": "string" }, "description": "Spaces included; absent means full export" },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["records", "sha256"],
+        "properties": {
+          "records": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

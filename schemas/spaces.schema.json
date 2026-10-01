@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jmfraga/lm-pocket/schemas/spaces.schema.json",
+  "title": "LM-Pocket spaces",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "label"],
+    "properties": {
+      "id": { "type": "string", "pattern": "^(personal|portable_professional|shared|public|work:[a-z0-9_-]+)$" },
+      "label": { "type": "string" },
+      "description": { "type": "string" },
+      "created_at": { "type": "string", "format": "date-time" }
+    }
+  }
+}

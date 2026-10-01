@@ -1,0 +1,24 @@
+{
+  "format": "lm-pocket-export",
+  "format_version": "0.1.0",
+  "created_at": "2026-10-01T00:00:00Z",
+  "generator": "hand-written example",
+  "files": {
+    "memories.jsonl": {
+      "records": 10,
+      "sha256": "bff87440aa6fc8f5488079575d7ba532f1568dd976612587aabd4f9c6bb57f4a"
+    },
+    "spaces.json": {
+      "records": 4,
+      "sha256": "c50d0a9099210d787e7807e086ffd8e83fb117c98fa637ca85e8b1d286f78123"
+    },
+    "policies.json": {
+      "records": 2,
+      "sha256": "508bfb5a7c7fca67e5d39d8d9dd4a831e4f63fd4a23909fec85c184d0227be52"
+    },
+    "audit.jsonl": {
+      "records": 5,
+      "sha256": "092f2223c03c4d10fdbbf368a6cae807fffc92618c732e936884fa17b72e6df9"
+    }
+  }
+}

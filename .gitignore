@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+dist/
+build/
+*.egg-info/
+# never commit a real pocket
+LM-Pocket/
+*.db
+*.db-*

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "personal",
+    "label": "Personal"
+  },
+  {
+    "id": "portable_professional",
+    "label": "Portable professional"
+  },
+  {
+    "id": "work:acme",
+    "label": "Acme (fictional employer)"
+  },
+  {
+    "id": "shared",
+    "label": "Shared"
+  }
+]
