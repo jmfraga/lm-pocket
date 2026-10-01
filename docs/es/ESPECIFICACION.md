@@ -1,6 +1,6 @@
 # LM-Pocket — Especificación del MVP
 
-**Versión:** 0.2 (borrador) · **Estado:** abierta a discusión.
+**Versión:** 0.2 (borrador) · **Estado:** **congelada conceptualmente para implementar v0.1** (1-oct-2026, tag `spec-v0.2-frozen`). Los conflictos que aparezcan al implementar se documentan en [spec-conflicts.md](../spec-conflicts.md), nunca se cambian en silencio.
 **Canónica:** [SPEC.md](../../SPEC.md) en inglés. Esta versión resume cada sección; si hay discrepancia, manda la inglesa.
 
 **Objetivo:** una memoria longitudinal personal, portable, local-first, independiente del modelo y propiedad del usuario, que vive en una carpeta (USB/SSD/laptop) y se consulta por MCP o por puentes de prompt.
@@ -9,6 +9,9 @@
 > **Tu memoria de IA debe pertenecerte a ti, no al proveedor del modelo.**
 
 LM-Pocket no es asistente ni modelo: es una **capa de continuidad** que conserva contexto, memoria, preferencias, aprendizajes y provenance, sin importar el LLM, la app, la empresa o el dispositivo.
+
+## No-objetivos
+LM-Pocket demuestra memoria longitudinal **del usuario**, soberana, portable y gobernada. **No** modela un agente artificial: nada de self-model, intenciones ni identidad artificial. Eso pertenece a una capa de investigación aparte que podrá *consumir* LM-Pocket por su contrato MCP y su formato de exportación.
 
 ## 2. Arquitectura
 Carpeta de datos (cifrada por la app) → **LM-Pocket Local** (UI en localhost, servidor MCP, importar/exportar) → tres caminos:
@@ -29,14 +32,17 @@ passphrase → Argon2id → KEK → desenvuelve DEK → base SQLCipher
 La passphrase nunca es la clave; cambiarla solo re-envuelve la DEK. Una **clave de recuperación** se genera una vez al crear el pocket. Solo librerías maduras.
 
 ## 5. Distribución
-v0.1: `uvx lm-pocket --data /Volumes/MiUSB/LM-Pocket`. Binarios firmados, después.
+Dos promesas distintas: **los datos son portables a cualquier sistema** (carpeta exFAT), pero **la app todavía no es "conéctalo donde sea sin internet"**.
+- Máquina con internet: `uv` instalado → `uvx lm-pocket …`.
+- Máquina sin internet, preparada: Python 3.11–3.14 o `uv` con Python en caché, **más** el wheelhouse para ese sistema/CPU/Python dentro del USB. Ver [offline.md](../offline.md).
+- Máquina sin internet y sin nada instalado: **no soportado en v0.1** (requiere empaquetar un Python independiente; roadmap).
 
 ## 6. Flujo
 Conectar USB → abrir LM-Pocket Local → passphrase → elegir perfil → MCP disponible → conectar LLM. Bloquear o desconectar → las claves se borran de memoria y el MCP responde "pocket bloqueado".
 
 ## 7. Modelo de memoria
 Campos: `id` (UUIDv7), `content`, `type` (fact, preference, event, interpretation, skill, decision, relationship, goal), `status` (candidate, durable, archived, rejected), `space`, `sensitivity`, `portable`, `source_type` (user, llm, imported, derived), `provenance` (provider, model, client, method, conversation_ref, recorded_at), `confidence`, fechas, `derived_from`, `supersedes`, `tags`.
-Se eliminó `visibility`: se traslapaba con `space` + `portable`. Un solo mecanismo de acceso.
+Se agregó `declassified_at` (ver § 10). Se eliminó `visibility`: se traslapaba con `space` + `portable`. Un solo mecanismo de acceso.
 
 ## 8. Propuestas
 Ningún LLM escribe directo a la memoria canónica. Para que revisar no se vuelva un trámite: revisión por lotes, detección de duplicados, reglas automáticas opcionales (apagadas por defecto, registradas y reversibles) y caducidad de candidatas sin revisar.
@@ -45,7 +51,12 @@ Ningún LLM escribe directo a la memoria canónica. Para que revisar no se vuelv
 `personal`, `portable_professional`, `work:<id>`, `shared`, `public`. **Ningún espacio lee otro sin autorización explícita.**
 
 ## 10. Experiencia portable
-Guardar la *lección* sin el *dato propietario*. La memoria derivada enlaza a su origen, pero **exportarla nunca exporta el origen**.
+Guardar la *lección* sin el *dato propietario*. **`derived` nunca implica `portable`**: una abstracción puede filtrar datos institucionales aunque ya no contenga el texto original (un cliente, un nombre clave, una cifra, una fecha, o una lección tan específica que delata su origen).
+
+```text
+memoria origen → candidata derivada (portable: false) → revisión de desclasificación → portable (declassified_at)
+```
+La revisión muestra el origen junto a la abstracción y pide confirmar que no hay nombres de personas, clientes o proyectos, ni cifras, fechas o lugares que apunten al origen, ni nada que no dirías en una entrevista con un competidor. La memoria derivada enlaza a su origen, pero **exportarla nunca exporta el origen**. En v0.1 van el modelo de datos y la regla; la interfaz de derivación llega justo después de la primera demo.
 
 ## 11. Perfiles de permisos
 Un MCP local por stdio no puede verificar qué cliente lo lanzó. Por eso cada entrada MCP del cliente lleva un **perfil con nombre** (`--profile work`), y el servidor aplica sus reglas en cada llamada. Por MCP nunca se escriben memorias definitivas, se borran ni se cambian políticas: eso solo pasa en la UI local.
@@ -64,10 +75,10 @@ Herramientas: `pocket.search_memories`, `get_memory`, `get_context`, `get_recent
 **Paquete de contexto:** bloque por propósito y espacio, con la instrucción "no guardes esto en tu propia memoria". Nunca "todo".
 
 ## 15–18. Seguridad, equipos ajenos, provenance y auditoría
-Local-first, cifrado en reposo, mínimo privilegio, cero confianza entre espacios, bloqueo rápido, exportación explícita, el usuario conserva las claves. Lo que **no** se puede proteger está en el [modelo de amenazas](modelo-de-amenazas.md). Toda memoria responde "¿de dónde salió?"; las inferencias se distinguen de lo que el usuario declaró. La auditoría registra eventos, no contenido sensible.
+Local-first, cifrado en reposo, mínimo privilegio, cero confianza entre espacios, bloqueo rápido, exportación explícita, el usuario conserva las claves. Lo que **no** se puede proteger está en el [modelo de amenazas](modelo-de-amenazas.md). Toda memoria responde "¿de dónde salió?"; las inferencias se distinguen de lo que el usuario declaró. La auditoría registra eventos, no contenido sensible. Es **append-only de aplicación** (el código solo inserta), **no inmutable**: quien tenga la clave puede editar la base y v0.1 no lo detecta. A futuro: cadena de hash entre eventos y checkpoints autenticados (HMAC o firma).
 
 ## 19. Formato de exportación
-`manifest.json` (con conteo de registros y SHA-256 por archivo), `memories.jsonl`, `spaces.json`, `policies.json`, `audit.jsonl`. El provenance vive dentro de cada memoria. Un importador debe **verificar conteos y checksums antes de leer el contenido**. Exportaciones cifradas por defecto. Ver [memory-format.md](../memory-format.md).
+`manifest.json` (con conteo de registros y SHA-256 por archivo), `memories.jsonl`, `spaces.json`, `policies.json`, `audit.jsonl`. El provenance vive dentro de cada memoria. Un importador debe **verificar conteos y checksums antes de leer el contenido**. **Integridad no es autenticidad:** los checksums detectan corrupción accidental y exportaciones incompletas, no manipulación deliberada (quien edita el archivo puede recalcularlos). La protección contra manipulación —HMAC o firma sobre el manifiesto— está en el roadmap. Exportaciones cifradas por defecto. Ver [memory-format.md](../memory-format.md).
 
 ## 20–21. Requisitos
 FR-01 a FR-16 como en la versión inglesa, incluido **FR-16: bloquear o desconectar hace que toda llamada MCP responda "bloqueado"**. No funcionales: un comando para arrancar; la misma carpeta abre en los tres sistemas; cambiar de SQLite a otro motor no cambia el contrato MCP ni el formato; búsqueda en inglés y español sin depender de acentos.
