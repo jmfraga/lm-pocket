@@ -18,6 +18,7 @@ LM-Pocket protects your memory **at rest and at the boundary between spaces**. I
 
 - **Data already sent to a model.** Whatever a cloud LLM read during a session is now on that provider's side, subject to their retention and training policies. Unplugging the pocket stops *future* reads, not past ones. Use narrow profiles and small context packages.
 - **A compromised host.** If the computer where you unlock the pocket has malware, it can read memory in RAM and anything the app displays. Do not unlock your personal space on machines you do not trust.
+- **Key material in memory, especially on Windows.** Python cannot zero memory; on Windows SQLCipher's memory wiping is also off (it crashes there). A memory dump of a running, unlocked LM-Pocket can reveal keys on any OS.
 - **The model ignoring "do not persist".** Context packages ask the model not to store them; the pocket has no way to enforce that.
 - **Deliberate edits by someone who has the key, or to a plaintext export.** SHA-256 checksums can be recomputed by whoever edits the files, and the audit log is *application* append-only, not immutable. Tamper evidence (hash-chained audit, HMAC or signed checkpoints and manifests) is on the roadmap, not in v0.1.
 - **Rollback.** Replacing the pocket with an older copy of itself is not detected in v0.1.

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import threading
 import time
 import uuid
@@ -95,7 +96,10 @@ class Store:
         self.conn.row_factory = sqlcipher3.Row
         # Raw key: SQLCipher skips its own PBKDF2 (we already ran Argon2id).
         self.conn.execute(f"PRAGMA key = \"x'{dek.hex()}'\"")
-        self.conn.execute("PRAGMA cipher_memory_security = ON")
+        # Wipes freed memory and locks pages. Crashes sqlcipher3-wheels on Windows
+        # (stack overflow, 0xC00000FD, verified in CI 2026-10-01), so it is off there.
+        if sys.platform != "win32":
+            self.conn.execute("PRAGMA cipher_memory_security = ON")
         self.conn.execute("PRAGMA temp_store = MEMORY")
         self.conn.execute("PRAGMA foreign_keys = ON")
         # Fails here with "file is not a database" if the key is wrong.
