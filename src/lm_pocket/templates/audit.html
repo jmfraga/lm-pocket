@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Audit log</h1>
+<p class="muted">Application append-only: LM-Pocket only inserts events. It is not tamper-proof (see the threat model). Events, not content.</p>
+<table><tr><th>#</th><th>when (UTC)</th><th>event</th><th>profile</th><th>client</th><th>detail</th></tr>
+{% for e in rows %}<tr><td>{{ e.seq }}</td><td>{{ e.at }}</td><td>{{ e.event }}</td><td>{{ e.profile or '' }}</td><td>{{ e.client or '' }}</td><td><code>{{ e.detail }}</code></td></tr>{% endfor %}
+</table>
+{% endblock %}

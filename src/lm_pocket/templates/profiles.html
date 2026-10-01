@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Permission profiles</h1>
+<p class="muted">Scopes: <code>read:&lt;space&gt;</code> (wildcards allowed, e.g. <code>read:work:*</code>), <code>propose:memory</code>. Deny wins over allow. Anything not allowed is denied. MCP can never change these.</p>
+{% for name, body in rows.items() %}
+<form method="post" action="/profiles" class="card">
+  <input type="hidden" name="name" value="{{ name }}"><strong>{{ name }}</strong>
+  <textarea class="mono" name="body" rows="10">{{ body }}</textarea>
+  <button>Save</button>
+</form>
+{% endfor %}
+<h2>New profile</h2>
+<form method="post" action="/profiles" class="card">
+  <input type="text" name="name" placeholder="name" required>
+  <textarea class="mono" name="body" rows="7">{"allow": ["read:portable_professional", "propose:memory"], "deny": ["read:personal"], "propose_into": "portable_professional"}</textarea>
+  <button>Create</button>
+</form>
+{% endblock %}

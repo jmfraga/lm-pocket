@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import from a model (prompt bridge)</h1>
+<h2>1. Paste this prompt into the other model</h2>
+<textarea class="mono" rows="14" readonly>{{ prompt }}</textarea>
+<h2>2. Paste its answer here</h2>
+<form method="post" action="/import/preview" class="card">
+  <textarea class="mono" name="text" rows="10" required placeholder="Paste the model's answer — prose and code fences are fine"></textarea>
+  <div class="row" style="margin-top:6px">
+    <label>Into space <select name="space">{% for s in spaces %}<option>{{ s }}</option>{% endfor %}</select></label>
+    <input type="text" name="provider" placeholder="provider (openai, google…)">
+    <input type="text" name="model" placeholder="model">
+    <button>Preview</button>
+  </div>
+</form>
+<p class="muted">Everything imported lands as a proposal with provenance. Nothing becomes durable until you approve it.</p>
+{% endblock %}

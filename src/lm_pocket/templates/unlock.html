@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Unlock your pocket</h1>
+<p class="muted">{{ folder }}</p>
+{% if reason and reason != "user" %}<p class="warn">Locked because: {{ reason }}</p>{% endif %}
+<form method="post" action="/unlock" class="card">
+  <p><label>Passphrase or recovery key<br><input type="password" name="secret" autofocus required size="40" autocomplete="current-password"></label></p>
+  <p class="muted"><label><input type="checkbox" name="force" value="true"> The pocket says it is open on another computer that is gone — take it over</label></p>
+  <button>Unlock</button>
+</form>
+<p class="muted">While locked, every MCP call answers "pocket locked". Nothing is readable without the passphrase or the recovery key.</p>
+{% endblock %}

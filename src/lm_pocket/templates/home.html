@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your pocket is unlocked</h1>
+<p class="muted">{{ folder }}</p>
+<div class="row">
+  <div class="card">Durable <strong>{{ counts.get('durable', 0) }}</strong></div>
+  <div class="card"><a href="/proposals">Proposals</a> <strong>{{ counts.get('candidate', 0) }}</strong></div>
+  <div class="card">Archived <strong>{{ counts.get('archived', 0) }}</strong></div>
+  <div class="card">Rejected <strong>{{ counts.get('rejected', 0) }}</strong></div>
+</div>
+<h2>Connect an MCP client</h2>
+<p>One MCP entry = one permission profile. The client cannot choose its own permissions.</p>
+{% for name, prof in profiles.items() %}
+<div class="card">
+  <strong>{{ name }}</strong> <span class="muted">{{ prof.get('description', '') }}</span>
+  <p class="muted">Claude Code:</p>
+  <pre>claude mcp add pocket-{{ name }} -- {{ claude_code[name] }}</pre>
+  <p class="muted">Claude Desktop, Cursor, Gemini CLI, LM Studio (<code>mcpServers</code>):</p>
+  <pre>{{ configs[name] }}</pre>
+</div>
+{% endfor %}
+{% endblock %}

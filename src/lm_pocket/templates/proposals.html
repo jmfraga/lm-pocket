@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Proposals</h1>
+<p class="muted">Nothing here is part of your memory yet. Edit the text if needed, select, then approve or reject in batch.</p>
+{% if rows %}
+<form method="post" action="/proposals">
+{% for m in rows %}
+<div class="card">
+  <label class="row"><input type="checkbox" name="sel" value="{{ m.id }}"> <span class="chip">{{ m.space }}</span><span class="chip">{{ m.type }}</span>
+  <span class="muted">{{ m.source_type }} · {{ m.provenance.get('method') }}{% if m.provenance.get('provider') %} · {{ m.provenance.provider }}{% endif %}{% if m.provenance.get('model') %} / {{ m.provenance.model }}{% endif %}{% if m.provenance.get('client') %} · {{ m.provenance.client }}{% endif %} · confidence {{ '%.2f'|format(m.confidence or 0) }}</span></label>
+  <textarea name="content_{{ m.id }}" rows="2">{{ m.content }}</textarea>
+  {% if m.type == 'interpretation' %}<div class="muted warn">Inferred by a model, not stated by you.</div>{% endif %}
+</div>
+{% endfor %}
+<div class="row"><button name="action" value="approve">Approve selected</button><button class="secondary" name="action" value="reject">Reject selected</button></div>
+</form>
+{% else %}<p class="muted">No pending proposals.</p>{% endif %}
+{% endblock %}

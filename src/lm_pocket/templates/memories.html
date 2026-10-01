@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Memories</h1>
+<form method="get" class="row">
+  <select name="space"><option value="">all spaces</option>{% for s in spaces %}<option {% if s == space %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+  <input type="text" name="q" value="{{ q }}" placeholder="search (accents optional)">
+  <button class="secondary">Filter</button>
+</form>
+{% for m in rows %}
+<div class="card">
+  <div>{{ m.content }}</div>
+  <div class="muted">
+    <span class="chip">{{ m.space }}</span><span class="chip">{{ m.type }}</span>{% if m.portable %}<span class="chip">portable</span>{% endif %}
+    {{ m.source_type }} · {{ m.provenance.get('method') }}{% if m.provenance.get('provider') %} · {{ m.provenance.provider }}{% endif %}{% if m.provenance.get('client') %} · {{ m.provenance.client }}{% endif %} · {{ m.created_at[:10] }} · <code>{{ m.id[:8] }}</code>
+  </div>
+  <form method="post" action="/memories/{{ m.id }}/archive" style="margin-top:6px"><button class="secondary">Archive</button></form>
+</div>
+{% else %}<p class="muted">No memories here.</p>{% endfor %}
+<h2>Add a memory yourself</h2>
+<form method="post" action="/memories" class="card">
+  <textarea name="content" rows="2" required placeholder="Something true about you"></textarea>
+  <div class="row" style="margin-top:6px">
+    <select name="type">{% for t in types %}<option>{{ t }}</option>{% endfor %}</select>
+    <select name="space">{% for s in spaces %}<option>{{ s }}</option>{% endfor %}</select>
+    <input type="text" name="tags" placeholder="tags, comma separated">
+    <button>Save as durable</button>
+  </div>
+</form>
+{% endblock %}

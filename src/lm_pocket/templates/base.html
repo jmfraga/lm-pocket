@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LM-Pocket</title>
+<style>
+:root { --bg:#fbfaf7; --fg:#1d1d1b; --muted:#6b6a65; --line:#e3e0d8; --card:#fff; --accent:#2f5d50; --warn:#9a3b1f; --chip:#eef3f0; }
+@media (prefers-color-scheme: dark) { :root { --bg:#151614; --fg:#ecebe6; --muted:#a3a29b; --line:#2f302c; --card:#1d1e1b; --accent:#8cc5b0; --warn:#f0a08a; --chip:#23302b; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { border-bottom:1px solid var(--line); padding:12px 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+header strong { font-size:16px; }
+nav a { color:var(--fg); text-decoration:none; margin-right:12px; }
+nav a:hover { color:var(--accent); }
+main { max-width:960px; margin:0 auto; padding:20px 16px 60px; }
+h1 { font-size:22px; margin:0 0 12px; } h2 { font-size:17px; margin:24px 0 8px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin:10px 0; }
+.muted { color:var(--muted); font-size:13px; }
+.chip { display:inline-block; background:var(--chip); border-radius:4px; padding:0 6px; font-size:12px; margin-right:4px; }
+.msg { background:var(--chip); border-left:3px solid var(--accent); padding:8px 12px; margin-bottom:14px; }
+.warn { color:var(--warn); }
+input[type=text], input[type=password], input[type=number], select, textarea { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; max-width:100%; }
+textarea { width:100%; }
+pre, textarea.mono { font:13px/1.45 ui-monospace, Menlo, monospace; }
+pre { background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:10px; overflow-x:auto; white-space:pre-wrap; }
+button { font:inherit; background:var(--accent); color:var(--bg); border:0; border-radius:6px; padding:6px 14px; cursor:pointer; }
+button.secondary { background:transparent; color:var(--fg); border:1px solid var(--line); }
+table { border-collapse:collapse; width:100%; font-size:13px; } td, th { border-bottom:1px solid var(--line); padding:6px; text-align:left; vertical-align:top; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+</style>
+</head>
+<body>
+<header>
+  <strong>LM-Pocket</strong>
+  {% if unlocked %}
+  <nav>
+    <a href="/">Home</a><a href="/memories">Memories</a><a href="/proposals">Proposals</a><a href="/spaces">Spaces</a><a href="/profiles">Profiles</a><a href="/import">Import</a><a href="/export">Export</a><a href="/audit">Audit</a>
+  </nav>
+  <form method="post" action="/lock" style="margin-left:auto"><button class="secondary">Lock</button></form>
+  {% else %}<span class="muted">locked</span>{% endif %}
+</header>
+<main>
+{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

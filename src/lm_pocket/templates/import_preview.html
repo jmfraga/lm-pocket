@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Preview import</h1>
+<p class="muted">{{ items|length }} items found{% if skipped %}, {{ skipped }} skipped (empty, duplicated or malformed){% endif %}. Into <span class="chip">{{ space }}</span> from {{ provider or 'unknown provider' }} {{ model }}.</p>
+{% if items %}
+<form method="post" action="/import/confirm">
+<input type="hidden" name="space" value="{{ space }}"><input type="hidden" name="provider" value="{{ provider }}"><input type="hidden" name="model" value="{{ model }}">
+{% for it in items %}
+<div class="card">
+  <label class="row"><input type="checkbox" name="keep" value="{{ loop.index0 }}" checked> keep
+  <select name="type_{{ loop.index0 }}">{% for t in types %}<option {% if t == it.type %}selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+  confidence <input type="number" step="0.05" min="0" max="1" name="confidence_{{ loop.index0 }}" value="{{ it.confidence }}">
+  <input type="text" name="tags_{{ loop.index0 }}" value="{{ it.tags|join(', ') }}" placeholder="tags"></label>
+  <textarea name="content_{{ loop.index0 }}" rows="2">{{ it.content }}</textarea>
+</div>
+{% endfor %}
+<button>Save as proposals</button>
+</form>
+{% else %}<p><a href="/import">Nothing usable found — try again</a></p>{% endif %}
+{% endblock %}

@@ -106,7 +106,7 @@ class PocketService:
         self._watcher = threading.Thread(target=watch, name="pocket-watcher", daemon=True)
         self._watcher.start()
 
-    def _require(self) -> Store:
+    def require(self) -> Store:
         store = self.store
         if store is None:
             raise Locked(self.last_lock_reason or "pocket is locked")
@@ -118,7 +118,7 @@ class PocketService:
     # --- profiles -------------------------------------------------------
 
     def profile(self, name: str) -> policy.Profile:
-        body = self._require().profiles().get(name)
+        body = self.require().profiles().get(name)
         if body is None:
             raise Denied(f"unknown profile: {name}")
         return policy.Profile.from_dict(name, body)
@@ -133,7 +133,7 @@ class PocketService:
         handler = getattr(self, f"_tool_{tool}", None)
         if handler is None:
             raise BadRequest(f"unknown tool: {tool}")
-        store = self._require()
+        store = self.require()
         try:
             prof = self.profile(profile_name)
         except Denied:
@@ -236,7 +236,7 @@ class PocketService:
 
     def context_package(self, profile_name: str, *, topic: str = "", purpose: str = "", max_tokens: int = 800,
                         client: str | None = "ui", _store: Store | None = None) -> dict:
-        store = _store or self._require()
+        store = _store or self.require()
         prof = self.profile(profile_name)
         spaces = self._readable(prof, store)
         mems = store.search(topic, spaces=spaces, limit=MAX_SEARCH) if topic.strip() else store.list(
@@ -249,7 +249,7 @@ class PocketService:
     # --- local-UI-only operations (never exposed over MCP) -------------
 
     def review(self, approve: list[str], reject: list[str], edits: dict[str, str] | None = None) -> dict:
-        store = self._require()
+        store = self.require()
         edits = edits or {}
         done = {"approved": 0, "rejected": 0}
         for mid in approve:
@@ -274,7 +274,7 @@ class PocketService:
         return done
 
     def add_user_memory(self, content: str, type: str, space: str, tags: list[str] | None = None) -> dict:
-        store = self._require()
+        store = self.require()
         if space not in {s["id"] for s in store.spaces()}:
             raise BadRequest(f"unknown space: {space}")
         m = store.add_memory({
@@ -286,17 +286,17 @@ class PocketService:
         return m
 
     def archive(self, memory_id: str) -> None:
-        store = self._require()
+        store = self.require()
         store.update(memory_id, status="archived")
         store.audit("memory_archived", memory_id=memory_id)
 
     def add_space(self, space_id: str, label: str) -> None:
-        store = self._require()
+        store = self.require()
         store.add_space(space_id, label)
         store.audit("space_created", space=space_id)
 
     def set_profile(self, name: str, body: dict) -> None:
-        store = self._require()
+        store = self.require()
         policy.validate(body)
         if not name.replace("-", "").replace("_", "").isalnum():
             raise BadRequest("profile name: letters, digits, - and _ only")
@@ -304,7 +304,7 @@ class PocketService:
         store.audit("profile_changed", name)
 
     def import_candidates(self, items: list[dict], *, space: str, provider: str, model: str) -> list[str]:
-        store = self._require()
+        store = self.require()
         if space not in {s["id"] for s in store.spaces()}:
             raise BadRequest(f"unknown space: {space}")
         ids = []
@@ -327,7 +327,7 @@ class PocketService:
 
     def load_sample(self) -> int:
         """Load the fictional sample export (examples/sample-export) into an empty pocket."""
-        store = self._require()
+        store = self.require()
         if store.counts():
             raise PocketError("sample data can only be loaded into an empty pocket")
         pkg = resources.files("lm_pocket") / "sample"

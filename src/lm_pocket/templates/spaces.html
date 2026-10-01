@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Spaces</h1>
+<p class="muted">No space can read another unless a profile explicitly allows it.</p>
+<table><tr><th>id</th><th>label</th><th>description</th></tr>
+{% for s in rows %}<tr><td><code>{{ s.id }}</code></td><td>{{ s.label }}</td><td>{{ s.description or '' }}</td></tr>{% endfor %}</table>
+<h2>New work space</h2>
+<form method="post" action="/spaces" class="card row">
+  <input type="text" name="space_id" placeholder="work:company" required pattern="work:[a-z0-9_-]+">
+  <input type="text" name="label" placeholder="Label" required>
+  <button>Create</button>
+</form>
+{% endblock %}

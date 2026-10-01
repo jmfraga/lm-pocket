@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Context package (prompt bridge)</h1>
+<p class="muted">For models without MCP. The package contains only what the chosen profile can read, within a token budget.</p>
+<form method="get" class="card row">
+  <select name="profile">{% for p in profiles %}<option {% if p == profile %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+  <input type="text" name="topic" value="{{ topic }}" placeholder="topic (empty = recent)">
+  <input type="text" name="purpose" value="{{ purpose }}" placeholder="purpose">
+  <label>tokens <input type="number" name="max_tokens" value="{{ max_tokens }}" min="200" max="8000" step="100"></label>
+  <button>Generate</button>
+</form>
+{% if pkg %}
+<p class="muted">{{ pkg.memory_ids|length }} memories included{% if pkg.omitted %}, {{ pkg.omitted }} omitted for the budget{% endif %}. Select all and copy into the other model.</p>
+<textarea class="mono" rows="22" readonly>{{ pkg.text }}</textarea>
+{% endif %}
+{% endblock %}
