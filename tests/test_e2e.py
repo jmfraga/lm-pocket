@@ -16,6 +16,11 @@ from pathlib import Path
 
 import httpx
 import pytest
+
+WINDOWS_SKIP = pytest.mark.skipif(
+    __import__("sys").platform == "win32",
+    reason="Windows cannot move a folder with open files (unplug simulation) and has no SIGTERM; untested there",
+)
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -76,6 +81,7 @@ def mcp(env, profile, *calls):
     return asyncio.run(mcp_calls(env, profile, list(calls)))
 
 
+@WINDOWS_SKIP
 def test_first_demo_end_to_end(daemon):
     env, folder, ui, proc = daemon
 
@@ -144,6 +150,7 @@ def test_lock_button_cuts_mcp(daemon):
     assert err and "pocket_locked" in msg
 
 
+@WINDOWS_SKIP
 def test_sigterm_releases_lock_and_runtime(daemon):
     env, folder, ui, proc = daemon
     ui.post("/unlock", data={"secret": PASS})

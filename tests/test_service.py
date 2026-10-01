@@ -5,6 +5,11 @@ from pathlib import Path
 
 import pytest
 
+WINDOWS_SKIP = pytest.mark.skipif(
+    __import__("sys").platform == "win32",
+    reason="Windows cannot move a folder with open files (unplug simulation) and has no SIGTERM; untested there",
+)
+
 from conftest import PASS
 from lm_pocket import crypto
 from lm_pocket.pocket import PocketFolder
@@ -112,6 +117,7 @@ def test_lock_stops_mcp(svc):
         svc.call("work", "search_memories", {"query": ""})
 
 
+@WINDOWS_SKIP
 def test_unplug_locks_within_watch_interval(svc, tmp_path):
     shutil.move(str(tmp_path / "LM-Pocket"), str(tmp_path / "elsewhere"))  # simulates the USB going away
     deadline = time.time() + 2
@@ -122,6 +128,7 @@ def test_unplug_locks_within_watch_interval(svc, tmp_path):
         svc.call("work", "search_memories", {"query": ""})
 
 
+@WINDOWS_SKIP
 def test_unplug_detected_even_before_watcher_tick(tmp_path):
     PocketFolder.create(tmp_path / "p", PASS)
     s = PocketService(tmp_path / "p", watch_interval=60)
