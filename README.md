@@ -1,5 +1,7 @@
 # LM-Pocket — Longitudinal Memory Pocket
 
+[![tests](https://github.com/jmfraga/lm-pocket/actions/workflows/test.yml/badge.svg)](https://github.com/jmfraga/lm-pocket/actions/workflows/test.yml)
+
 **Your AI memory, physically yours.**
 
 [Español](README.es.md)
