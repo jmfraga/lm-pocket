@@ -1,7 +1,7 @@
 # LM-Pocket — MVP Specification
 
-**Version:** 0.2 (draft)
-**Status:** open for discussion — nothing here is final until the v0.1 flow works end to end.
+**Version:** 0.2
+**Status:** **conceptually frozen for the v0.1 implementation** (2026-10-01, git tag `spec-v0.2-frozen`). Changes discovered during implementation are recorded in [docs/spec-conflicts.md](docs/spec-conflicts.md) with a proposed minimal modification — never applied silently.
 **Goal:** a personal, portable, local-first, model-agnostic longitudinal memory, owned by the user, carried in a folder (USB/SSD/laptop) and reachable through MCP or manual prompt bridges.
 
 > Changes from v0.1 (the original brainstorm) are listed in [§ 24](#24-changes-from-v01).
@@ -79,7 +79,11 @@ The MVP must run entirely locally with no external services.
 
 ### Out of scope for v0.1
 
-Vector DB, graph DB, cloud sync, fine-tuning, bundled local models, multi-user, mobile app, proprietary hardware, secure element, inference on the USB, signed installers, the remote bridge (documented, built in v0.2).
+Vector DB, graph DB, cloud sync, fine-tuning, bundled local models, multi-user, mobile app, proprietary hardware, secure element, inference on the USB, signed installers, the remote bridge (documented, built in v0.2), cryptographic signatures / tamper-evident audit (see § 18–19, roadmap).
+
+### Non-goals (not v0.1, not later)
+
+LM-Pocket demonstrates **sovereign, portable, governed longitudinal memory of the user**. It does **not** model an artificial agent: no self-model, no intentions, no artificial identity. Those belong to a separate research layer that may *consume* LM-Pocket through its MCP contract and export format. Keeping them out is what keeps LM-Pocket small, auditable and model-agnostic.
 
 ## 4. Storage and encryption
 
@@ -119,10 +123,18 @@ Future: FIDO2, Secure Enclave / TPM, per-space keys, auto-lock, attempt limits, 
 
 ## 5. Distribution
 
-- **v0.1:** a Python package runnable with one command, no install:
-  `uvx lm-pocket --data /Volumes/MyUSB/LM-Pocket`
-- A copy of the package can live on the USB itself for offline machines.
-- Signed binaries (macOS, Windows, AppImage) come later; they are expensive to maintain and are not needed to validate the idea.
+Two different promises, kept separate:
+
+- **The data is portable everywhere.** The pocket folder is plain files on exFAT; any machine that can run LM-Pocket can open it.
+- **The app is not yet "plug anywhere offline".** v0.1 needs a runtime on the host.
+
+| Situation | What v0.1 needs on the host |
+|---|---|
+| Online machine | `uv` installed → `uvx lm-pocket …` (downloads Python + dependencies on first run) |
+| Offline machine, prepared | Python 3.11–3.14 **or** `uv` with a cached Python, **plus** the wheelhouse for that OS/CPU/Python carried on the USB (`app/wheelhouse/`) — see [docs/offline.md](docs/offline.md) |
+| Offline machine with nothing installed | **Not supported in v0.1.** Requires bundling a standalone Python per OS (roadmap). |
+
+Signed binaries (macOS, Windows, AppImage) and a self-contained runtime on the USB come later; they are expensive to maintain and are not needed to validate the idea.
 
 ## 6. Main flow
 
@@ -161,6 +173,7 @@ provenance:
   recorded_at: timestamp
 confidence: float (0–1)     # how sure the proposer was; user-stated facts default to 1.0
 derived_from: [memory_ids]
+declassified_at: optional    # set only by a declassification review (§ 10)
 supersedes: [memory_ids]
 tags: [string]
 ```
@@ -212,17 +225,32 @@ Distinguish proprietary data from portable learning.
 - Proprietary: *"Client X has this confidential strategy."*
 - Portable: *"In ambiguous projects, validating small hypotheses before scaling works for me."*
 
-The system lets the user save **derived abstractions** without carrying the original data:
+The system lets the user save **derived abstractions** without carrying the original data.
+
+**`derived` never implies `portable`.** An abstraction can still leak institutional data even without the original text: a client's name, a codename, a figure, a date, a market, or simply a lesson so specific that it identifies its source. Portability is granted only by an explicit declassification review:
+
+```text
+source memory (work:company_a)
+   ↓  user or LLM drafts an abstraction
+derived candidate   source_type: derived, portable: false, status: candidate
+   ↓  declassification review (side by side with the source)
+portable memory     portable: true, declassified_at: <timestamp>
+```
+
+The declassification review shows the source next to the abstraction and asks the user to confirm, item by item, that the abstraction contains no names of people, clients or projects, no figures, dates or places that point back to the source, and nothing they would not say in a job interview with a competitor. Rejected → the candidate stays non-portable or is discarded.
 
 ```yaml
 derived_from: [<memory in work:company_a>]
 content: "Validating small hypotheses before scaling reduces rework."
 space: portable_professional
-portable: true
 source_type: derived
+portable: true
+declassified_at: 2026-10-01T18:30:00Z   # required whenever source_type is derived and portable is true
 ```
 
-Derivation is always a user action (or a proposal the user approves). The derived memory keeps a link to its source, but **exporting the derived memory never exports the source**.
+The derived memory keeps a link to its source, but **exporting the derived memory never exports the source**.
+
+*v0.1 note:* the data model and rule ship in v0.1; the derivation UI ships right after the first demo (ROADMAP).
 
 ## 11. Permission profiles
 
@@ -344,7 +372,9 @@ pocket unlocked · MCP client connected (profile: work) · space portable_profes
 context package generated · pocket locked
 ```
 
-The audit log is append-only from the app's point of view and is included in full exports.
+The audit log is **application append-only**: LM-Pocket's code only ever inserts events and exposes no way to edit or delete them. It is **not immutable** — anyone holding the key can modify the database directly, and v0.1 cannot detect that. It is included in full exports.
+
+Future (roadmap): a **hash chain** over events (each event commits to the previous one) plus **authenticated checkpoints** (HMAC with a key derived from the DEK, or a signature with a device key) stored outside the database, so that edits, deletions or truncation of the log become detectable.
 
 ## 19. Export format
 
@@ -357,7 +387,9 @@ lm-pocket-export/
 └── audit.jsonl
 ```
 
-`provenance` lives inside each memory (no separate `provenance.jsonl`: one source of truth). The manifest includes record counts and SHA-256 checksums so an importer can verify the export is complete before trusting it.
+`provenance` lives inside each memory (no separate `provenance.jsonl`: one source of truth).
+
+**Integrity is not authenticity.** The manifest includes record counts and SHA-256 checksums. They detect **accidental corruption and incomplete exports** (a truncated copy, a file missing from the folder). They do **not** detect malicious modification: whoever edits a file can recompute its checksum and the manifest. Protection against deliberate tampering requires an authenticated mechanism — an HMAC keyed from the pocket's key, or a digital signature over the manifest — which is on the roadmap, not in v0.1. An *encrypted* export is protected by its AEAD encryption, which does detect modification of the ciphertext.
 
 Exports are encrypted by default (age / passphrase); a plaintext export is an explicit, logged choice.
 
@@ -384,8 +416,8 @@ Spec: [docs/memory-format.md](docs/memory-format.md). Schemas: [schemas/](schema
 
 ## 21. Non-functional requirements
 
-- **Simplicity** — running in minutes with one command.
-- **Compatibility** — macOS, Windows, Linux; the same folder opens on all three.
+- **Simplicity** — running in minutes with one command on a machine with `uv`.
+- **Compatibility** — macOS, Windows, Linux; the same data folder opens on all three (the app runtime requirements are in § 5).
 - **Evolvability** — moving from SQLite to Postgres/vector/graph must not change the MCP contract or the export format.
 - **Performance** — never send the whole corpus to the LLM.
 - **Security** — encryption at rest is mandatory.
@@ -430,6 +462,11 @@ Extra demo (prompt bridge): generate export prompt → paste into a closed chat 
 | `visibility` + `space` | `space` + `portable` only | Two overlapping access mechanisms invite bugs. |
 | `provenance.jsonl` separate | Provenance inside each memory; manifest with counts + checksums | One source of truth; detect incomplete exports. |
 | — | Threat model document | Sent-to-cloud data and compromised hosts must be stated plainly. |
+| "Checksums protect the export" | Checksums = integrity/completeness; HMAC/signatures = tamper evidence (roadmap) | A checksum can be recomputed by whoever edits the file. |
+| Audit log implied immutable | Application append-only; hash chain + authenticated checkpoints on the roadmap | Honest about what v0.1 can detect. |
+| "Runs offline anywhere" | Data portable everywhere; app needs a runtime (§ 5, docs/offline.md) | No bundled Python yet. |
+| Derived memories portable by default | `derived` ≠ `portable`; explicit declassification review | Abstractions can leak institutional data. |
+| — | Non-goals: no self-model, intentions or artificial identity | LM-Pocket is the user's memory, not an agent. |
 
 ## 25. MVP hypothesis
 

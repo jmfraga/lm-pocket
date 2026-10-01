@@ -16,6 +16,8 @@ lm-pocket-export/
 - UTF-8, NFC-normalized text. Timestamps in UTC, ISO 8601 (`2026-10-01T18:30:00Z`).
 - IDs are UUIDv7 strings. Never reuse an id; updates create a new memory with `supersedes`.
 - `manifest.json` lists the record count and SHA-256 of every file. **An importer must verify counts and checksums before reading content** — a file with 70 valid lines out of 100 expected looks perfectly fine otherwise.
+- Checksums give **integrity and completeness**, not authenticity: anyone who edits a file can recompute them. Tamper evidence (HMAC or signature over the manifest) is a future, backward-compatible addition (`manifest.authentication`).
+- `declassified_at` is required when `source_type` is `derived` and `portable` is `true`.
 - Unknown fields must be preserved on re-export (forward compatibility).
 - `format_version` follows semver. Readers must refuse a major version they do not know.
 - An encrypted export is the same tree inside an `age`-encrypted tar; the plaintext layout is identical.

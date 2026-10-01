@@ -8,7 +8,8 @@ LM-Pocket protege tu memoria **en reposo y en la frontera entre espacios**. No p
 - **USB perdido o robado:** SQLCipher en reposo, KEK derivada con Argon2id, ninguna copia en texto plano.
 - **Un LLM de trabajo leyendo lo personal:** espacios aislados por defecto; el servidor aplica el perfil en cada llamada.
 - **Un LLM escribiendo recuerdos falsos:** las propuestas siempre entran como candidatas.
-- **Alteración silenciosa o exportaciones incompletas:** auditoría y manifiesto con conteos y SHA-256.
+- **Corrupción accidental o exportaciones incompletas:** manifiesto con conteos y SHA-256 (integridad y completitud, **no** autenticidad).
+- **Modificación del pocket o de una exportación cifrada:** la autenticación de AES-GCM / SQLCipher hace que un cifrado alterado no descifre.
 - **Que el proyecto desaparezca:** formato abierto y documentado; Apache-2.0 y CC-BY.
 - **Passphrase olvidada:** clave de recuperación.
 
@@ -16,5 +17,7 @@ LM-Pocket protege tu memoria **en reposo y en la frontera entre espacios**. No p
 - **Lo que ya le mandaste a un modelo.** Lo que un LLM en la nube leyó queda del lado del proveedor. Desconectar el pocket detiene lecturas *futuras*, no pasadas.
 - **Un equipo comprometido.** Si la computadora donde desbloqueas tiene malware, puede leer la RAM y la pantalla.
 - **Que el modelo ignore "no guardes esto".** El pocket no puede obligarlo.
+- **Ediciones deliberadas de quien tiene la clave, o de una exportación en texto plano.** Un SHA-256 lo recalcula quien edita el archivo, y la auditoría es *append-only de aplicación*, no inmutable. La evidencia de manipulación (auditoría encadenada por hash, checkpoints y manifiestos con HMAC o firma) está en el roadmap, no en v0.1.
+- **Regresión a una copia anterior** del pocket: no se detecta en v0.1.
 - **Que apruebes propuestas malas.** La compuerta vale lo que vale la revisión.
 - **El puente remoto, si lo activas.** Suma al túnel, tu manejo de tokens y el cliente remoto a la frontera de confianza.
